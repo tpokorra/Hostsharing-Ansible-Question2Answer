@@ -1,0 +1,127 @@
+---
+- hosts: q2a
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    # see https://docs.ansible.com/ansible/latest/user_guide/become.html#risks-of-becoming-an-unprivileged-user
+    ansible_common_remote_group: "{{pac}}"
+    ansible_remote_tmp: ~/.ansible/tmp
+
+  tasks:
+  - name: Create user, domain and database
+    import_tasks: tasks/hs_basis.yml
+
+  #################################
+  ## create directories
+  #################################
+  - name: create directory q2a
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/q2a"
+      state: directory
+
+  - name: create directory data
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/data"
+      state: directory
+
+  - name: create directory cache
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/cache"
+      state: directory
+
+  ##################################
+  ## install q2a
+  ##################################
+  - name: download q2a
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    unarchive:
+      src: https://github.com/q2a/question2answer/archive/refs/tags/v{{q2a_version}}.tar.gz
+      remote_src: yes
+      dest: /home/pacs/{{pac}}/users/{{user}}/q2a
+      extra_opts: [--strip-components=1]
+      creates: /home/pacs/{{pac}}/users/{{user}}/q2a/index.php
+
+  - name: create directory for german language
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/q2a/qa-lang/de-DE"
+      state: directory
+
+  - name: download german translation
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    unarchive:
+      src: https://github.com/fulgor/q2a-lang-de-formal/archive/master.tar.gz
+      remote_src: yes
+      dest: /home/pacs/{{pac}}/users/{{user}}/q2a/qa-lang/de-DE
+      extra_opts: [--strip-components=1]
+      creates: /home/pacs/{{pac}}/users/{{user}}/q2a/qa-lang/de-DE/qa-lang-users.php
+
+  ##################################
+  ## configuration
+  ##################################
+  - name: upload configuration file
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/q2a/qa-config.php" src="templates/qa-config.php" mode=0600
+
+  ############################################################
+  ## site should be closed to unregistered or unapproved users
+  ############################################################
+  - name: upload patch file for closed instance
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/closed_site.patch" src="templates/closed_site.patch" mode=0600
+
+  - name: apply patch for closed instance
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    shell: |
+      patch -p1 < ../closed_site.patch || exit -1
+      touch "/home/pacs/{{pac}}/users/{{user}}/.ansible_patch_applied"
+    args:
+      executable: /bin/bash
+      chdir: "/home/pacs/{{pac}}/users/{{user}}/q2a"
+      creates: "/home/pacs/{{pac}}/users/{{user}}/.ansible_patch_applied"
+    when: non_public_site == True
+
+  ########################
+  ## setup the apache site
+  ########################
+
+  - name: upload htaccess
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    template: dest="/home/pacs/{{pac}}/users/{{user}}/q2a/.htaccess" src="templates/htaccess" mode=0644
+
+  - name: check for htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    stat:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+    register: htdocs_exists
+
+  - name: drop htdocs-ssl directory
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      path: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: absent
+    when: htdocs_exists.stat.islnk is defined and htdocs_exists.stat.islnk == False
+
+  - name: create symbolic link for htdocs-ssl
+    become: yes
+    become_user: "{{pac}}-{{user}}"
+    file:
+      src: "/home/pacs/{{pac}}/users/{{user}}/q2a"
+      dest: "/home/pacs/{{pac}}/users/{{user}}/doms/{{domain}}/htdocs-ssl"
+      state: link
+
+

@@ -1,0 +1,38 @@
+diff --git a/qa-include/app/page.php b/qa-include/app/page.php
+index 3d6fab2..b595ee9 100644
+--- a/qa-include/app/page.php
++++ b/qa-include/app/page.php
+@@ -286,6 +286,33 @@ function qa_output_content($qa_content)
+ 		// we no longer block access here for unapproved users; this is handled by the Permissions settings
+ 	}
+ 
++	if ($requestlower !== "register" && $requestlower !== "login" && $requestlower !== "forgot") {
++		// we block access here for unapproved users; because the permissions don't catch everything
++		# see qa_include/pages/question.php
++		$permiterror = qa_user_permit_error('permit_view_q_page');
++		if ($permiterror || !isset($userid)) {
++			$qa_content = qa_content_prepare();
++
++			switch ($permiterror) {
++				case 'login':
++					$qa_content['error'] = qa_insert_login_links(qa_lang_html('main/view_q_must_login'));
++					break;
++				case 'confirm':
++					$qa_content['error'] = qa_insert_login_links(qa_lang_html('main/view_q_must_confirm'));
++					break;
++				case 'approve':
++					$qa_content['error'] = strtr(qa_lang_html('main/view_q_must_be_approved'), array(
++						'^1' => '<a href="' . qa_path_html('account') . '">',
++						'^2' => '</a>',
++					));
++					break;
++				default:
++					$qa_content['error'] = qa_lang_html('users/no_permission');
++					break;
++			}
++		}
++	}
++
+ 	// Combine various Javascript elements in $qa_content into single array for theme layer
+ 
+ 	$script = array('<script>');

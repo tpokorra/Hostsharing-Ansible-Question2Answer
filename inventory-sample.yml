@@ -1,0 +1,18 @@
+q2a:
+  hosts:
+    xyz00:
+      ansible_ssh_host: xyz00.hostsharing.net
+      ansible_ssh_user: xyz00
+      pac: xyz00
+      domain: q2a.example.org
+      user: q2a
+      password: testpassw0rd_changeme
+
+      # only allow registered users to see content.
+      # need following settings:
+      # spam: Enable moderation (approval) of users
+      # permissions: Viewing question pages: Approved users only; untick: Allow search engines to view question pages
+      non_public_site: True
+
+      # see https://github.com/q2a/question2answer/releases
+      q2a_version: 1.8.6
