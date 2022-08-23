@@ -12,6 +12,7 @@ q2a:
       # need following settings:
       # spam: Enable moderation (approval) of users
       # permissions: Viewing question pages: Approved users only; untick: Allow search engines to view question pages
+      # RSS-Feeds: disable all
       non_public_site: True
 
       # see https://github.com/q2a/question2answer/releases
