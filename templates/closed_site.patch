@@ -6,7 +6,7 @@ index 3d6fab2..b595ee9 100644
  		// we no longer block access here for unapproved users; this is handled by the Permissions settings
  	}
  
-+	if ($requestlower !== "register" && $requestlower !== "login" && $requestlower !== "forgot") {
++	if ($requestlower !== "register" && $requestlower !== "login" && $requestlower !== "forgot" && $requestlower !== "reset") {
 +		// we block access here for unapproved users; because the permissions don't catch everything
 +		# see qa_include/pages/question.php
 +		$permiterror = qa_user_permit_error('permit_view_q_page');
