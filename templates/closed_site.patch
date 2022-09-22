@@ -1,5 +1,5 @@
 diff --git a/qa-include/app/page.php b/qa-include/app/page.php
-index 3d6fab2..b595ee9 100644
+index 3d6fab2..7aebbeb 100644
 --- a/qa-include/app/page.php
 +++ b/qa-include/app/page.php
 @@ -286,6 +286,33 @@ function qa_output_content($qa_content)
@@ -36,3 +36,18 @@ index 3d6fab2..b595ee9 100644
  	// Combine various Javascript elements in $qa_content into single array for theme layer
  
  	$script = array('<script>');
+diff --git a/qa-include/qa-feed.php b/qa-include/qa-feed.php
+index f2b7c7f..85e7631 100644
+--- a/qa-include/qa-feed.php
++++ b/qa-include/qa-feed.php
+@@ -170,6 +170,10 @@ $countslugs = $categoryslugs === null ? null : count($categoryslugs);
+ if (!isset($feedoption))
+ 	qa_feed_not_found();
+ 
++# disable rss feed for everyone, because this site is not public
++if (true) {
++   qa_feed_not_found();
++}
+ 
+ // Check that all the appropriate options are in place to allow this feed to be retrieved
+ 
